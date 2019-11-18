@@ -16,13 +16,10 @@ class JsonReceiver(object):
             if start < 0:
                 return None
             len = int(self.buf[:start])
-            self.buf = self.buf[start+1:]
-            msgbuf = self.buf[len]
-            self.buf = self.buf[1:]
-
-            #print("msgbuf = ", msgbuf)
+            msgbuf = self.buf[start+1:start+1+len]
+            
             msg = json.loads(msgbuf)
-            self.buf = self.buf[end + 1:]
+            self.buf = self.buf[start + 1 + len + 1:]
             return msg
         except:
             return None

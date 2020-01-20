@@ -184,6 +184,8 @@ class Controller(object):
                         self.control.show_ok("Finished")
                     else:
                         self.control.show_ok(msg["message"])
+        elif type == "message":
+            self.control.show_ok(msg["message"])
 
     def __on_receive_event(self, sock, cond):
         

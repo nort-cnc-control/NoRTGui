@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import euclid3
 import sys
 import getopt
 import abc
@@ -12,7 +11,6 @@ import common
 import common.jsonwait
 
 import gi
-gi.require_version("Gtk", "3.0")
 from gi.repository import GLib
 
 from ui import gui

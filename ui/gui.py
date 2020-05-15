@@ -5,10 +5,6 @@ import enum
 import time
 import os
 
-import gi
-import OpenGL
-import OpenGL.GL
-
 import wx
 import wx.stc
 import wx.grid

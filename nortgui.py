@@ -13,7 +13,7 @@ import common.jsonwait
 import gi
 from gi.repository import GLib
 
-from ui import gui
+from ui_wx import gui
 
 def usage():
     pass
@@ -23,24 +23,22 @@ class Controller(object):
     def __init__(self, sock):
         self.sock = sock
         self.control = gui.Interface()
-        self.control.load_file += self.__load_file
-        self.control.reset_clicked += self.__reset
+        
+        self.control.newfile += self.__new_file
+        self.control.loadfile += self.__load_file 
+        self.control.savefile += self.__save_file
+
+        self.control.stop_clicked += self.__stop
         self.control.start_clicked += self.__start
         self.control.continue_clicked += self.__continue
-        self.control.stop_clicked += self.__stop
+        
         self.control.home_clicked += self.__home
         self.control.probe_clicked += self.__probe
+        
         self.control.command_entered += self.__command
 
-        self.control.xp_clicked += self.__xp
-        self.control.xm_clicked += self.__xm
-        self.control.yp_clicked += self.__yp
-        self.control.ym_clicked += self.__ym
-        self.control.zp_clicked += self.__zp
-        self.control.zm_clicked += self.__zm
-
         self.sock.settimeout(0)
-        self.control.switch_to_initial_mode()
+        self.control.Switch2InitialMode()
 
     def __send_command(self, command):
         msg = {
@@ -53,6 +51,13 @@ class Controller(object):
         self.__send_command("continue")
 
     def __start(self):
+        cmds = [line.strip() for line in self.control.GetGCode().split()]
+        r = {
+            "type" : "command",
+            "command" : "load",
+            "program" : cmds
+        }
+        self.msg_sender.send_message(r)
         self.__send_command("start")
 
     def __reset(self):
@@ -85,105 +90,54 @@ class Controller(object):
         }
         self.msg_sender.send_message(r)
 
-    def __xp(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 X1 M121"
-        }
-        self.msg_sender.send_message(r)
-
-    def __xm(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 X-1 M121"
-        }
-        self.msg_sender.send_message(r)
-
-    def __yp(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 Y1 M121"
-        }
-        self.msg_sender.send_message(r)
-
-    def __ym(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 Y-1 M121",
-        }
-        self.msg_sender.send_message(r)
-
-    def __zp(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 Z1 M121"
-        }
-        self.msg_sender.send_message(r)
-
-    def __zm(self):
-        r = {
-            "type" : "command",
-            "command" : "execute",
-            "program" : "M120 G91 G0 Z-1 M121"
-        }
-        self.msg_sender.send_message(r)
+    def __new_file(self):
+        self.control.DisplayGCode("")
 
     def __load_file(self, filename):
         file = open(filename, encoding="utf-8")
-        lines = file.readlines()
+        code = file.read()
         file.close()
+        self.control.DisplayGCode(code)
 
-        cmds = []
-        for line in lines:
-            cmds.append(line.strip())
-        r = {
-            "type" : "command",
-            "command" : "load",
-            "program" : cmds
-        }
-        self.msg_sender.send_message(r)
+    def __save_file(self, filename, text):
+        file = open(filename, "w", encoding="utf-8")
+        file.write(text)
+        file.close()
 
     def __process_event(self, msg):
         type = msg["type"]
-        if type == "loadlines":
-            lines = msg["lines"]
-            self.control.clear_commands()
-            for line in lines:
-                self.control.add_command(line)
-        elif type == "line":
+        if type == "line":
             line = msg["line"]
-            self.control.select_line(line)
+            self.control.SelectActiveLine(line)
+
         elif type == "coordinates":
             hw = msg["hardware"]
             glob = msg["global"]
             loc = msg["local"]
             cs = msg["cs"]
-            self.control.set_coordinates(hw, glob, loc, cs)
+            self.control.SetCoordinates(hw, glob, loc, cs)
+
         elif type == "state":
             state = msg["state"]
             message = msg["message"]
             if state == "init":
-                self.control.switch_to_initial_mode()
+                self.control.Switch2InitialMode()
             elif state == "running":
-                self.control.switch_to_running_mode()
+                self.control.Switch2RunningMode()
             elif state == "paused":
-                self.control.switch_to_paused_mode()
+                self.control.Switch2PausedMode()
                 if message != "":
                     self.control.show_ok(message)
             elif state == "completed":
-                self.control.switch_to_initial_mode()
+                self.control.Switch2InitialMode()
                 if msg["display"]:
                     if msg["message"] == "":
-                        self.control.show_ok("Finished")
+                        self.control.ShowOk("Finished")
                     else:
-                        self.control.show_ok(msg["message"])
+                        self.control.ShowOk(msg["message"])
+
         elif type == "message":
-            self.control.show_ok(msg["message"])
+            self.control.ShowPk(msg["message"])
 
     def __on_receive_event(self, sock, cond):
         

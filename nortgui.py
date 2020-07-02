@@ -51,7 +51,7 @@ class Controller(object):
         self.__send_command("continue")
 
     def __start(self):
-        cmds = [line.strip() for line in self.control.GetGCode().split()]
+        cmds = [line.strip() for line in self.control.GetGCode().splitlines()]
         r = {
             "type" : "command",
             "command" : "load",
@@ -127,7 +127,7 @@ class Controller(object):
             elif state == "paused":
                 self.control.Switch2PausedMode()
                 if message != "":
-                    self.control.show_ok(message)
+                    self.control.ShowOk(message)
             elif state == "completed":
                 self.control.Switch2InitialMode()
                 if msg["display"]:
@@ -137,7 +137,7 @@ class Controller(object):
                         self.control.ShowOk(msg["message"])
 
         elif type == "message":
-            self.control.ShowPk(msg["message"])
+            self.control.ShowOk(msg["message"])
 
     def __on_receive_event(self, sock, cond):
         

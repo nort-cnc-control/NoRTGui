@@ -107,9 +107,21 @@ class CNCWindow(wx.Frame):
             hbox_gcode = wx.BoxSizer(wx.HORIZONTAL)
             panel_gcode.SetSizer(hbox_gcode)
 
-            # program: richtext
-            self.code = wx.richtext.RichTextCtrl(panel_gcode, style=wx.LC_REPORT|wx.BORDER_SUNKEN)
+            # program: styledtext
+            self.indicator_error = 8
+            self.indicator_active = 9
+            self.indicator_start = 10
+            self.indicator_finish = 11
+
+            self.code = wx.stc.StyledTextCtrl(panel_gcode, style=wx.LC_REPORT|wx.BORDER_SUNKEN)
             self.codefont = wx.Font(13, wx.MODERN, wx.NORMAL, wx.NORMAL, False, u'Monospace')
+            
+#            self.code.IndicatorSetStyle(self.indicator_error, wx.stc.STC_INDIC_SQUIGGLE)
+#            self.code.IndicatorSetForeground(self.indicator_error, wx.Colour(255, 0, 0))
+
+#            self.code.IndicatorSetStyle(self.indicator_start, wx.stc.STC_INDIC_SQUIGGLE)
+#            self.code.IndicatorSetForeground(self.indicator_start, wx.Colour(255, 255, 0))
+
             hbox_gcode.Add(self.code,flag=wx.EXPAND,proportion=1)
 
             self.gcodemenu = wx.Menu()

@@ -50,7 +50,7 @@ class Controller(object):
     def __continue(self):
         self.__send_command("continue")
 
-    def __start(self):
+    def __load(self):
         cmds = [line.strip() for line in self.control.GetGCode().splitlines()]
         r = {
             "type" : "command",
@@ -58,6 +58,9 @@ class Controller(object):
             "program" : cmds
         }
         self.msg_sender.send_message(r)
+
+    def __start(self):
+        self.__load()
         self.__send_command("start")
 
     def __reset(self):
@@ -72,6 +75,7 @@ class Controller(object):
             "command" : "execute",
             "program" : cmd
         }
+        self.__load()
         self.msg_sender.send_message(r)
 
     def __home(self):

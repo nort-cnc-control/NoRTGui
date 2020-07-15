@@ -114,12 +114,29 @@ class Controller(object):
             line = msg["line"]
             self.control.SelectActiveLine(line)
 
-        elif type == "coordinates":
-            hw = msg["hardware"]
-            glob = msg["global"]
-            loc = msg["local"]
-            cs = msg["cs"]
+        elif type == "machine_state":
+            crds      = msg["coordinates"]
+            hw        = crds["hardware"]
+            glob      = crds["global"]
+            loc       = crds["local"]
+            cs        = crds["cs"]
             self.control.SetCoordinates(hw, glob, loc, cs)
+
+            movs      = msg["movement"]
+            feed      = movs["feed"]
+            status    = movs["status"]
+            command   = movs["command"]
+            self.control.SetMovementStatus(status)
+            self.control.SetMovementFeed(feed)
+            self.control.SetMovementCommand(command)
+
+            spindel   = msg["spindel"]
+            speed     = spindel["speed"]
+            status    = spindel["status"]
+            direction = spindel["direction"]
+            self.control.SetSpindelStatus(status)
+            self.control.SetSpindelSpeed(speed)
+            self.control.SetSpindelDirection(direction)
 
         elif type == "state":
             state = msg["state"]

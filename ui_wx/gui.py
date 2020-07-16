@@ -56,15 +56,17 @@ class Interface(object):
         self.window.probe_btn.Enable()
         self.window.command.Enable()
         self.window.command.SetFocus()
+        self.window.code.Enable()
 
     def Switch2PausedMode(self):
         self.window.start_btn.Disable()
         self.window.continue_btn.Enable()
         self.window.pause_btn.Disable()
         self.window.home_btn.Disable()
-        self.window.probe_btn.Disable()
-        self.window.command.Disable()
+        self.window.probe_btn.Enable()
+        self.window.command.Enable()
         self.window.command.SetFocus()
+        self.window.code.Enable()
 
     def Switch2RunningMode(self):
         self.window.start_btn.Disable()
@@ -73,6 +75,7 @@ class Interface(object):
         self.window.home_btn.Disable()
         self.window.probe_btn.Disable()
         self.window.command.Disable()
+        self.window.code.Disable()
 
     def run(self):
         self.app.MainLoop()

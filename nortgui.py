@@ -6,12 +6,12 @@ import abc
 import os
 import socket
 import json
-
+import threading
 import common
 import common.jsonwait
+import time
 
-import gi
-from gi.repository import GLib
+from multiprocessing import Process, Manager, Value, Queue
 
 from ui_wx import gui
 
@@ -39,6 +39,8 @@ class Controller(object):
 
         self.sock.settimeout(0)
         self.control.Switch2InitialMode()
+
+        self.is_run = False
 
     def __send_command(self, command):
         msg = {
@@ -160,36 +162,61 @@ class Controller(object):
         elif type == "message":
             self.control.ShowOk(msg["message"])
 
-    def __on_receive_event(self, sock, cond):
+    @staticmethod
+    def __receive_events(receiver, is_run, queue):
         
-        while True:
+        while is_run.value:
             try:
-                msg, dis = self.msg_receiver.receive_message(wait=False)
+                msg, dis = receiver.receive_message(wait=False)
                 if dis:
                     print("Disconnect")
                     return False
                 if msg is None:
-                    return True
-            except:
+                    time.sleep(0.05)
+                    continue
+
+            except Exception as e:
+                print("err: %s" % str(e))
                 return True
-            print(msg)
-            self.__process_event(msg)
+            print("Message received:", msg)
+            queue.put(msg)
         return True
+
+    def __handle_events(self, is_run, queue):
+        while is_run.value:
+            try:
+                msg = queue.get(True, timeout=0.2)
+                #msg = queue.get()
+                self.__process_event(msg)
+            except:
+                pass
 
     def run(self):
         self.msg_receiver = common.jsonwait.JsonReceiver(self.sock)
         self.msg_sender = common.jsonwait.JsonSender(self.sock)
 
-        GLib.io_add_watch(self.sock, GLib.IO_IN, self.__on_receive_event)
+        cmd_queue = Queue()
+        manager = Manager()
+        is_run = manager.Value('b', True)
+
+        t = threading.Thread(target=self.__handle_events, args=(is_run, cmd_queue))
+        t.start()
+
+        p = Process(target=self.__receive_events, args=(self.msg_receiver, is_run, cmd_queue))
+        p.start()
+
         self.__reset()
         self.control.run()
+
+        is_run.value = False
+        p.join()
 
 if __name__ == "__main__":
 
     infile = None
 
     try:
-        optlist, _ = getopt.getopt(sys.argv[1:], "i:p:b:h")
+        optlist, _ = getopt.getopt(sys.argv[1:], "i:p:r:h")
     except getopt.GetoptError as err:
         print(err)
         sys.exit(1)
@@ -208,7 +235,7 @@ if __name__ == "__main__":
         elif o == "-p":
             rport = int(a)
 
-    remote = ("127.0.0.1", 8888)
+    remote = (raddr, rport)
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(remote)
